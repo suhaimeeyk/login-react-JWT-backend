@@ -22,9 +22,7 @@ const connection = mysql.createConnection({
 
 app.post('/register',jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function(err, hash) {
-        // Store hash in your password DB.
-        
-                    // execute will internally call prepare and query
+
         connection.execute(
             'INSERT INTO db_users (users_usersname,users_password,users_name,users_tel) VALUES (?,?,?,?)',
             [req.body.users_usersname, hash, req.body.users_name, req.body.users_tel ],
@@ -74,21 +72,9 @@ app.post('/authen',jsonParser, function (req, res, next) {
 })
 
 
-// app.get('/Users', (req,res) => {
-//     db.query("SELECT * FROM db_users", (err, results) => {
-//         if(err) {
-//             console.log(err);
-//         } else {
-//             res.send(results);
-//         }
-//     });
-// })
-
 
 app.get('/Users',jsonParser, function (req, res, next)  {
-        // Store hash in your password DB.
-        
-                    // execute will internally call prepare and query
+
         connection.execute(
             'SELECT * FROM db_users',
             function(err, results, fields) {
@@ -101,6 +87,71 @@ app.get('/Users',jsonParser, function (req, res, next)  {
         );
 })
 
+  app.get('/EditUser/:users_id', (req, res) => {
+    let users_id = req.params.users_id;
+
+    if (!users_id) {
+        return res.status(400).send({ error: true, message: "Please provide  users_id"});
+    } else {
+        connection.query("SELECT * FROM  db_users WHERE users_id = ?", users_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            let status = "Ok";
+            if (results === undefined || results.length == 0) {
+                message = "Book not found";
+            } else {
+                message = "Successfully data";
+            }
+
+            return res.send({ status: status, data: results[0] , message: message})
+        })
+    }
+})
+
+
+
+
+app.put('/EditUser',jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function(err, hash) {
+
+        connection.query(
+            ' UPDATE db_users SET users_usersname = ?, users_password = ?, users_name = ?, users_tel = ? WHERE users_id = ?',
+            [req.body.users_usersname, hash, req.body.users_name, req.body.users_tel , req.body.users_id],
+            function(err, results, fields) {
+                    let status = "Ok";
+                    let message = "";
+                if (results.changedRows === 0) {
+                    message = "Book not found or data are same";
+                } else {
+                    message = "successfully updated";
+                }
+
+                return res.send({status: status, error: false, data: results, message: message })
+
+            }
+        );
+    });
+})
+
+
+
+
+app.delete('/Users_id',jsonParser, function (req, res, next)  {
+
+    connection.execute(
+        'DELETE FROM db_users WHERE users_id = ?',
+        [req.body.users_id],
+        function(err, results, fields) {
+            if (err) {
+                res.json({status: 'error' , message: err})
+                return
+            }
+            // res.json({results})
+            res.json({status: 'Ok'})
+        }
+    );
+})
 
 
 app.listen(3333,function () {
