@@ -110,8 +110,6 @@ app.get('/Users',jsonParser, function (req, res, next)  {
 })
 
 
-
-
 app.put('/EditUser',jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function(err, hash) {
 
