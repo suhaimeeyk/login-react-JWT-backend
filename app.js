@@ -20,6 +20,8 @@ const connection = mysql.createConnection({
     database: 'therubber2'
   });
 
+  
+
 app.post('/register',jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function(err, hash) {
 
@@ -56,7 +58,6 @@ app.post('/login',jsonParser, function (req, res, next) {
         }
     );
 })
-
 
 
 app.post('/authen',jsonParser, function (req, res, next) { 
@@ -153,6 +154,6 @@ app.delete('/Users_id',jsonParser, function (req, res, next)  {
 
 
 
-app.listen(3333,function () {
-  console.log('CORS-enabled web server listening on port 3333')
+app.listen(3000,function () {
+  console.log('CORS-enabled web server listening on port 3000')
 })
