@@ -47,10 +47,10 @@ app.post('/login',jsonParser, function (req, res, next) {
             if (err) { res.json({status: 'error' , message: err}); return }
             if (users.length == 0) { res.json({status: 'error' , message: 'no user found'}); return }
             bcrypt.compare(req.body.users_password, users[0].users_password , function(err, isLogin) {
-                // result == true
+
                 if (isLogin) {
                     var token = jwt.sign({ email: users[0].email }, secret, { expiresIn: '1h' } );
-                    res.json({status: 'ok', message: 'Login success',token})
+                    res.json({status: 'ok', message: 'Login success',token, users_id: users[0].users_id})
                 } else {
                     res.json({status: 'error', message: 'Login failed'})
                 }
@@ -87,6 +87,33 @@ app.get('/Users',jsonParser, function (req, res, next)  {
             }
         );
 })
+
+// app.get('/Usersone',jsonParser, function (req, res, next)  {
+
+//         connection.execute(
+//             'SELECT * FROM db_users WHERE users_id = ?',
+//             users_id,
+//             function(err, results, fields) {
+//                 if (err) {
+//                     res.json({status: 'error' , message: err})
+//                     return
+//                 }
+//                 res.json({results})
+//             }
+//         );
+// })
+
+// app.get('/:user_id', async (req, res) => {
+//     const userID = req.params.user_id;
+//     try {
+//       const user = await User.findById(userID).exec();
+//       res.json(user);
+//     } catch (error) {
+//       console.error(error.message);
+//       res.status(500).send('Server Error');
+//     }
+//   })
+
 
   app.get('/EditUser/:users_id', (req, res) => {
     let users_id = req.params.users_id;
@@ -150,6 +177,100 @@ app.delete('/Users_id',jsonParser, function (req, res, next)  {
             res.json({status: 'Ok'})
         }
     );
+})
+
+// ประเภทสมาชิก
+
+app.post('/Createdb_catusers',jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function(err, hash) {
+
+        connection.execute(
+            'INSERT INTO db_catusers (catusers_name) VALUES (?)',
+            [req.body.catusers_name],
+            function(err, results, fields) {
+                if (err) {
+                    res.json({status: 'error' , message: err})
+                    return
+                }
+                res.json({status: 'Ok'})
+            }
+        );
+    });
+})
+
+app.get('/db_catusers',jsonParser, function (req, res, next)  {
+
+    connection.execute(
+        'SELECT * FROM db_catusers',
+        function(err, results, fields) {
+            if (err) {
+                res.json({status: 'error' , message: err})
+                return
+            }
+            res.json({results})
+        }
+    );
+})
+
+app.delete('/db_catusers_id',jsonParser, function (req, res, next)  {
+
+    connection.execute(
+        'DELETE FROM db_catusers WHERE catusers_id = ?',
+        [req.body.catusers_id],
+        function(err, results, fields) {
+            if (err) {
+                res.json({status: 'error' , message: err})
+                return
+            }
+            // res.json({results})
+            res.json({status: 'Ok'})
+        }
+    );
+})
+
+app.get('/EditUserdb_catusers/:catusers_id', (req, res) => {
+    let catusers_id = req.params.catusers_id;
+
+    if (!catusers_id) {
+        return res.status(400).send({ error: true, message: "Please provide  catusers_id"});
+    } else {
+        connection.query("SELECT * FROM  db_catusers WHERE catusers_id = ?", catusers_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            let status = "Ok";
+            if (results === undefined || results.length == 0) {
+                message = "not found";
+            } else {
+                message = "Successfully data";
+            }
+
+            return res.send({ status: status, data: results[0] , message: message})
+        })
+    }
+})
+
+
+app.put('/EditUserdb_catusers',jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function(err, hash) {
+
+        connection.query(
+            ' UPDATE db_catusers SET catusers_name = ? WHERE catusers_id = ?',
+            [req.body.catusers_name, req.body.catusers_id],
+            function(err, results, fields) {
+                    let status = "Ok";
+                    let message = "";
+                if (results.changedRows === 0) {
+                    message = " not found or data are same";
+                } else {
+                    message = "successfully updated";
+                }
+
+                return res.send({status: status, error: false, data: results, message: message })
+
+            }
+        );
+    });
 })
 
 
