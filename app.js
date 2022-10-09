@@ -452,6 +452,47 @@ app.put('/EditUserdb_pricerubbers', jsonParser, function (req, res, next) {
         );
     });
 })
+// รายการสมาชิกลูกค้า
+app.get('/db_customer', jsonParser, function (req, res, next) {
+
+    
+    
+    connection.query(
+        'SELECT * FROM db_customer,db_catusers,db_users where db_catusers.catusers_id = db_customer.catcustomer_id and db_users.users_id = db_customer.db_users_id',
+        function (err, results, fields) {
+        
+            // const formattedDate = `${myDate.getDate() + 1}/${myDate.getMonth() + 1}/${myDate.getFullYear()}`;
+            // var results.date_create = new FormData(formattedDate);
+            let status = "Ok";
+            if (err) {
+                res.json({ status: 'error', message: err })
+                return
+            }
+            
+            // res.json({ results })
+            return res.send({ error: false ,status: status, results: results })
+            
+        }
+    );
+})
+
+app.post('/Createdb_customer', jsonParser, function (req, res, next) {
+
+
+    connection.execute(
+        'INSERT INTO db_customer (  customer_name , customer_tel , catcustomer_id , db_users_id ) VALUES (?,?,?,?)',
+        [ req.body.customer_name, req.body.customer_tel,req.body.catcustomer_id, req.body.db_users_id],
+        function (err, results, fields) {
+            if (err) {
+                res.json({ status: 'error', message: err })
+                return
+            }
+            res.json({ status: 'Ok' })
+        }
+    );
+
+})
+
 
 
 app.listen(3333, function () {
