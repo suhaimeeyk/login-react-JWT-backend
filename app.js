@@ -28,8 +28,8 @@ app.post('/register', jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
 
         connection.execute(
-            'INSERT INTO db_users (users_usersname,users_password,users_name,users_tel) VALUES (?,?,?,?)',
-            [req.body.users_usersname, hash, req.body.users_name, req.body.users_tel],
+            'INSERT INTO db_users (users_usersname,users_password,users_name,users_tel,level) VALUES (?,?,?,?,?)',
+            [req.body.users_usersname, hash, req.body.users_name, req.body.users_tel, req.body.level],
             function (err, results, fields) {
                 if (err) {
                     res.json({ status: 'error', message: err })
@@ -52,7 +52,7 @@ app.post('/login', jsonParser, function (req, res, next) {
 
                 if (isLogin) {
                     var token = jwt.sign( { users_name: users[0].users_name, users_id: users[0].users_id }, secret, { expiresIn: '1h' });
-                    res.json({ status: 'ok', message: 'Login success', token})
+                    res.json({ status: 'ok', message: 'Login success' , level: users[0].level , token})
                 } else {
                     res.json({ status: 'error', message: 'Login failed' })
                 }
@@ -84,7 +84,21 @@ app.post('/authen', jsonParser, function (req, res, next) {
 app.get('/Users', jsonParser, function (req, res, next) {
 
     connection.execute(
-        'SELECT * FROM db_users',
+        'SELECT * FROM db_users,db_level where db_level.id = db_users.level ',
+        function (err, results, fields) {
+            if (err) {
+                res.json({ status: 'error', message: err })
+                return
+            }
+            res.json({ results })
+        }
+    );
+})
+
+app.get('/db_level', jsonParser, function (req, res, next) {
+
+    connection.execute(
+        'SELECT * FROM db_level ',
         function (err, results, fields) {
             if (err) {
                 res.json({ status: 'error', message: err })
@@ -122,8 +136,8 @@ app.put('/EditUser', jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
 
         connection.query(
-            ' UPDATE db_users SET users_usersname = ?, users_password = ?, users_name = ?, users_tel = ? WHERE users_id = ?',
-            [req.body.users_usersname, hash, req.body.users_name, req.body.users_tel, req.body.users_id],
+            ' UPDATE db_users SET users_usersname = ?, users_password = ?, users_name = ?, users_tel = ? , level = ? WHERE users_id = ?',
+            [req.body.users_usersname, hash, req.body.users_name, req.body.users_tel , req.body.level, req.body.users_id],
             function (err, results, fields) {
                 let status = "Ok";
                 let message = "";
@@ -492,6 +506,115 @@ app.post('/Createdb_customer', jsonParser, function (req, res, next) {
     );
 
 })
+
+app.get('/EditUserdb_customer/:customer_id', (req, res) => {
+    let customer_id = req.params.customer_id;
+
+    if (!customer_id) {
+        return res.status(400).send({ error: true, message: "Please provide  customer_id" });
+    } else {
+        connection.query("SELECT * FROM  db_customer WHERE customer_id = ?", customer_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            let status = "Ok";
+            if (results === undefined || results.length == 0) {
+                message = "not found";
+            } else {
+                message = "Successfully data";
+            }
+
+            return res.send({ status: status, data: results[0], message: message })
+        })
+    }
+})
+
+
+app.put('/EditUserdb_customer', jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
+
+        connection.query(
+            ' UPDATE db_customer SET  customer_name = ?,customer_tel = ? ,catcustomer_id = ?,db_users_id = ? WHERE customer_id = ?',
+            [ req.body.customer_name, req.body.customer_tel, req.body.catcustomer_id, req.body.db_users_id, req.body.customer_id],
+            function (err, results, fields) {
+                let status = "Ok";
+                let message = "";
+                if (results.changedRows === 0) {
+                    message = " not found or data are same";
+                } else {
+                    message = "successfully updated";
+                }
+
+                return res.send({ status: status, error: false, data: results, message: message })
+
+            }
+        );
+    });
+})
+
+app.delete('/db_customer_id', jsonParser, function (req, res, next) {
+
+    connection.execute(
+        'DELETE FROM db_customer WHERE customer_id = ?',
+        [req.body.customer_id],
+        function (err, results, fields) {
+            
+            if (err) {
+                res.json({ status: 'error', message: err })
+                return
+            }
+            // res.json({results})
+            res.json({ status: 'Ok' })
+        }
+    );
+})
+
+// รายการสมาชิกลูกค้ารายคน
+
+app.get('/db_customer_user/:users_id', (req, res) => {
+    let db_users_id = req.params.users_id;
+
+    if (!db_users_id) {
+        return res.status(400).send({ error: true, message: "Please provide  db_users_id" });
+    } else {
+        connection.query("SELECT * FROM db_customer,db_catusers,db_users where db_catusers.catusers_id = db_customer.catcustomer_id and db_users.users_id = db_customer.db_users_id and db_users_id= ? " , db_users_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            let status = "Ok";
+            if (results === undefined || results.length == 0) {
+                message = "not found";
+            } else {
+                message = "Successfully data";
+            }
+
+            return res.send({ status: status, data: results, message: message })
+        })
+    }
+})
+app.get('/UsersTo/:users_id', (req, res) => {
+    let users_id = req.params.users_id;
+
+    if (!users_id) {
+        return res.status(400).send({ error: true, message: "Please provide  users_id" });
+    } else {
+        connection.query("SELECT * FROM db_users,db_level where db_level.id = db_users.level and users_id = ? " , users_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            let status = "Ok";
+            if (results === undefined || results.length == 0) {
+                message = "not found";
+            } else {
+                message = "Successfully data";
+            }
+
+            return res.send({ status: status, data: results, message: message })
+        })
+    }
+})
+
+
 
 
 
