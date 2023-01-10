@@ -684,7 +684,6 @@ app.get('/db_data/:users_id', (req, res) => {
 
 app.post('/Createdatadisplay', jsonParser, function (req, res, next) {
 
-
     connection.execute(
         'INSERT INTO db_data(data_usersid,cat_id,data_totalgallon,data_wgallon,data_disgallon,data_dryrubber,data_price,data_pricetotal) VALUES( ? , ? , ? , ? , ? , ? , ? , ? )',
         [ req.body.data_usersid, req.body.cat_id , req.body.data_totalgallon , req.body.data_wgallon , req.body.data_disgallon, req.body.data_dryrubber , req.body.data_price , req.body.data_pricetotal ] ,
