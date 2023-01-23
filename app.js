@@ -553,12 +553,12 @@ app.get('/EditUserdb_customer/:customer_id', (req, res) => {
 })
 
 
-app.put('/EditUserdb_customer', jsonParser, function (req, res, next) {
+app.put('/EditUserdb_data', jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
 
         connection.query(
-            ' UPDATE db_customer SET  customer_name = ?,customer_tel = ? ,catcustomer_id = ?,db_users_id = ? WHERE customer_id = ?',
-            [ req.body.customer_name, req.body.customer_tel, req.body.catcustomer_id, req.body.db_users_id, req.body.customer_id],
+            ' UPDATE db_data SET  data_usersid = ?, cat_id = ?,data_totalgallon = ?,data_wgallon = ?,data_disgallon = ?,data_dryrubber = ?,data_price = ?,data_pricetotal = ? WHERE data_id = ?',
+            [ req.body.data_usersid, req.body.cat_id , req.body.data_totalgallon , req.body.data_wgallon , req.body.data_disgallon, req.body.data_dryrubber , req.body.data_price , req.body.data_pricetotal, req.body.data_id ] ,
             function (err, results, fields) {
                 let status = "Ok";
                 let message = "";
@@ -639,25 +639,47 @@ app.get('/UsersTo/:users_id', (req, res) => {
 
 
 // รายการขายน้ำยางแต่ละคน
-app.get('/db_data', jsonParser, function (req, res, next) {
+// app.get('/db_data', jsonParser, function (req, res, next) {
 
-    connection.query(
-        'SELECT * FROM db_data,db_customer,db_catwithdraw,db_users where db_catwithdraw.catwithdraw_id=db_data.cat_id and data_usersid=db_customer.customer_id and db_users_id=db_users.users_id',
-        function (err, results, fields) {
+//     connection.query(
+//         'SELECT * FROM db_data,db_customer,db_catwithdraw,db_users where db_catwithdraw.catwithdraw_id=db_data.cat_id and data_usersid=db_customer.customer_id and db_users_id=db_users.users_id',
+//         function (err, results, fields) {
         
-            // const formattedDate = `${myDate.getDate() + 1}/${myDate.getMonth() + 1}/${myDate.getFullYear()}`;
-            // var results.date_create = new FormData(formattedDate);
+//             // const formattedDate = `${myDate.getDate() + 1}/${myDate.getMonth() + 1}/${myDate.getFullYear()}`;
+//             // var results.date_create = new FormData(formattedDate);
+//             let status = "Ok";
+//             if (err) {
+//                 res.json({ status: 'error', message: err })
+//                 return
+//             }
+            
+//             // res.json({ results })
+//             return res.send({ error: false ,status: status, results: results })
+            
+//         }
+//     );
+// })
+
+app.get('/db_data/:users_id', (req, res) => {
+    let db_users_id = req.params.users_id;
+
+    if (!db_users_id) {
+        return res.status(400).send({ error: true, message: "Please provide  db_users_id" });
+    } else {
+        connection.query("SELECT * FROM db_data,db_customer,db_catwithdraw,db_users where db_catwithdraw.catwithdraw_id=db_data.cat_id and data_usersid=db_customer.customer_id and db_users_id=db_users.users_id and db_users_id= ? " , db_users_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
             let status = "Ok";
-            if (err) {
-                res.json({ status: 'error', message: err })
-                return
+            if (results === undefined || results.length == 0) {
+                message = "not found";
+            } else {
+                message = "Successfully data";
             }
-            
-            // res.json({ results })
-            return res.send({ error: false ,status: status, results: results })
-            
-        }
-    );
+
+            return res.send({ status: status, data: results, message: message })
+        })
+    }
 })
 
 
@@ -706,8 +728,48 @@ app.put('/EditUserdb_data', jsonParser, function (req, res, next) {
     bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
 
         connection.query(
-            ' UPDATE db_data SET  data_usersid = ?, data_usersid = ?, cat_id = ?,data_totalgallon = ?,data_wgallon = ?,data_disgallon = ?,data_dryrubber = ?,data_price = ?,data_pricetotal = ?',
+            ' UPDATE db_data SET  data_usersid = ?, cat_id = ?,data_totalgallon = ?,data_wgallon = ?,data_disgallon = ?,data_dryrubber = ?,data_price = ?,data_pricetotal = ?',
             [ req.body.data_usersid, req.body.cat_id , req.body.data_totalgallon , req.body.data_wgallon , req.body.data_disgallon, req.body.data_dryrubber , req.body.data_price , req.body.data_pricetotal ] ,
+            function (err, results, fields) {
+                let status = "Ok";
+                let message = "";
+                if (results.changedRows === 0) {
+                    message = " not found or data are same";
+                } else {
+                    message = "successfully updated";
+                }
+
+                return res.send({ status: status, error: false, data: results, message: message })
+
+            }
+        );
+    });
+})
+
+
+app.delete('/db_data_id', jsonParser, function (req, res, next) {
+
+    connection.execute(
+        'DELETE FROM db_data WHERE data_id = ?',
+        [req.body.data_id],
+        function (err, results, fields) {
+            
+            if (err) {
+                res.json({ status: 'error', message: err })
+                return
+            }
+            // res.json({results})
+            res.json({ status: 'Ok' })
+        }
+    );
+})
+
+app.put('/Editdb_data2', jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
+
+        connection.query(
+            ' UPDATE db_data SET data_shareprice = ?, data_depositprice = ?, status_id = ? WHERE data_id = ?',
+            [req.body.data_shareprice,req.body.data_depositprice,req.body.status_id, req.body.data_id],
             function (err, results, fields) {
                 let status = "Ok";
                 let message = "";

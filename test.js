@@ -1,21 +1,42 @@
-app.get('/Editdb_data/:data_id', (req, res) => {
-    let data_id = req.params.data_id;
+app.put('/EditUserdb_catusers', jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
 
-    if (!data_id) {
-        return res.status(400).send({ error: true, message: "Please provide  data_id" });
-    } else {
-        connection.query("SELECT * FROM db_data,db_customer,db_catwithdraw,db_users where db_catwithdraw.catwithdraw_id=db_data.cat_id and data_usersid=db_customer.customer_id and db_users_id=db_users.users_id and  users_id = ?", data_id, (error, results, fields) => {
-            if (error) throw error;
+        connection.query(
+            ' UPDATE db_catusers SET catusers_name = ? WHERE catusers_id = ?',
+            [req.body.catusers_name, req.body.catusers_id],
+            function (err, results, fields) {
+                let status = "Ok";
+                let message = "";
+                if (results.changedRows === 0) {
+                    message = " not found or data are same";
+                } else {
+                    message = "successfully updated";
+                }
 
-            let message = "";
-            let status = "Ok";
-            if (results === undefined || results.length == 0) {
-                message = "not found";
-            } else {
-                message = "Successfully data";
+                return res.send({ status: status, error: false, data: results, message: message })
+
             }
+        );
+    });
+})
+app.put('/Editdb_data2', jsonParser, function (req, res, next) {
+    bcrypt.hash(req.body.users_password, saltRounds, function (err, hash) {
 
-            return res.send({ status: status, data: results[0], message: message })
-        })
-    }
+        connection.query(
+            ' UPDATE db_data SET data_shareprice = ?, data_depositprice = ?, status_id = ? WHERE data_id = ?',
+            [req.body.data_shareprice,req.body.data_depositprice,req.body.status_id, req.body.data_id],
+            function (err, results, fields) {
+                let status = "Ok";
+                let message = "";
+                if (results.changedRows === 0) {
+                    message = " not found or data are same";
+                } else {
+                    message = "successfully updated";
+                }
+
+                return res.send({ status: status, error: false, data: results, message: message })
+
+            }
+        );
+    });
 })
