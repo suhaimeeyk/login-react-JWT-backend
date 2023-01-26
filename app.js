@@ -682,6 +682,28 @@ app.get('/db_data/:users_id', (req, res) => {
     }
 })
 
+app.get('/db_dataSelect/:users_id', (req, res) => {
+    let db_users_id = req.params.users_id;
+
+    if (!db_users_id) {
+        return res.status(400).send({ error: true, message: "Please provide  db_users_id" });
+    } else {
+        connection.query("SELECT DISTINCT db_customer.customer_id,db_customer.customer_name  FROM db_customer,db_users  where db_users_id=db_users.users_id and db_users_id= ?" , db_users_id, (error, results, fields) => {
+            if (error) throw error;
+
+            let message = "";
+            let status = "Ok";
+            if (results === undefined || results.length == 0) {
+                message = "not found";
+            } else {
+                message = "Successfully data";
+            }
+
+            return res.send({ status: status, data: results, message: message })
+        })
+    }
+})
+
 
 app.post('/Createdatadisplay', jsonParser, function (req, res, next) {
 
